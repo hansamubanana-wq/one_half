@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>二分の一チャレンジ</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Zen+Dots&family=M+PLUS+Rounded+1c:wght@400;700;900&display=swap');
@@ -356,6 +356,7 @@ body {
   background: linear-gradient(135deg, #ffd166, #06d6a0, #9b5de5, #ef476f, #ffd166);
   background-size: 300% 300%;
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   animation: clearPop 0.7s cubic-bezier(.34,1.56,.64,1) 0.2s both,
              titleShine 3s ease infinite 1s;
@@ -382,6 +383,7 @@ body {
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 16px; padding: 14px; text-align: center;
   backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 .clear-stat .l { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
 .clear-stat .v { font-family: 'Zen Dots', sans-serif; font-size: 24px; color: var(--accent); }
