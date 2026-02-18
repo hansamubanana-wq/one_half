@@ -407,6 +407,20 @@ body {
 }
 @keyframes ringExpand { 0%{width:60px;height:60px;opacity:0.7;} 100%{width:600px;height:600px;opacity:0;} }
 
+/* 顔写真 */
+.clear-photo-wrap {
+  animation: fadeUp 0.5s ease 0.4s both;
+}
+.clear-photo {
+  width: 120px; height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid var(--accent);
+  box-shadow: 0 0 30px rgba(255,209,102,0.6), 0 0 60px rgba(255,209,102,0.3);
+  animation: photoPop 0.7s cubic-bezier(.34,1.56,.64,1) 0.3s both;
+}
+@keyframes photoPop { 0%{transform:scale(0) rotate(-15deg);opacity:0;} 100%{transform:scale(1) rotate(0);opacity:1;} }
+
 /* confetti */
 .confetti { position: fixed; pointer-events: none; z-index: 500; top: -40px; animation: cfFall var(--d) ease-in var(--delay) forwards; }
 @keyframes cfFall { 0%{transform:translateY(0) rotate(0) scale(1);opacity:1;} 100%{transform:translateY(110vh) rotate(var(--r)) scale(0.5);opacity:0;} }
@@ -499,14 +513,21 @@ body {
 <!-- CLEAR OVERLAY -->
 <div class="clear-overlay" id="clear-overlay">
   <div class="clear-bg"></div>
-  <!-- 光のリング x3 -->
   <div class="clear-ring" style="--rd:2.5s;--delay:0s;"></div>
   <div class="clear-ring" style="--rd:2.5s;--delay:0.8s;"></div>
   <div class="clear-ring" style="--rd:2.5s;--delay:1.6s;"></div>
 
+  <audio id="clear-audio" src="clear_voice.mp3" preload="auto"></audio>
+
   <div class="clear-content">
     <div class="clear-trophy">🏆</div>
     <div class="clear-title">CLEAR!!</div>
+
+    <!-- 顔写真 -->
+    <div class="clear-photo-wrap">
+      <img src="clear_photo.jpg" alt="" class="clear-photo" id="clear-photo">
+    </div>
+
     <div class="clear-sub">10回連続成功！<br>これは奇跡に近い確率だ…</div>
     <div class="clear-stats">
       <div class="clear-stat"><div class="l">挑戦回数</div><div class="v" id="c-total">-</div></div>
@@ -661,7 +682,8 @@ function showToast(msg, color) {
 // ==============================
 function loadGame() {
   waiting = false;
-  clearTimeout(autoTimer);
+  // オートプレイ中はタイマーを消さない
+  if (!autoPlayActive) clearTimeout(autoTimer);
 
   currentCorrect = Math.floor(Math.random() * 2);
 
@@ -673,6 +695,9 @@ function loadGame() {
 
   syncDots();
   syncProb();
+
+  // オートプレイ中なら次の押下をスケジュール
+  if (autoPlayActive) scheduleAutoPress();
 }
 
 // ==============================
@@ -909,19 +934,18 @@ function startAutoPlay() {
   autoPlayActive = true;
   autoPlayEndTime = Date.now() + 5 * 60 * 1000;
   showAutoBar();
-  showToast('🤖 オートプレイ開始！タップで停止', 'var(--purple)');
-  scheduleAutoPress();
+  showToast('🤖 オートプレイ開始！停止ボタンで止められる', 'var(--purple)');
+  scheduleAutoPress(); // 最初の1回だけ呼ぶ、以降はloadGameが呼ぶ
 }
 
 function scheduleAutoPress() {
   if (!autoPlayActive) return;
   if (Date.now() >= autoPlayEndTime) { stopAutoPlay(); return; }
-  // wait until not waiting, then press
-  if (!waiting) {
-    choose(Math.floor(Math.random() * 2));
-  }
-  // next press after current animation settles (~300ms for win, ~1200ms for lose handled in loadGame)
-  autoTimer = setTimeout(() => scheduleAutoPress(), 350);
+  // 300ms後に押す（勝ちアニメの150ms + 少し余裕）
+  autoTimer = setTimeout(() => {
+    if (!autoPlayActive) return;
+    if (!waiting) choose(Math.floor(Math.random() * 2));
+  }, 300);
 }
 
 function stopAutoPlay() {
@@ -991,10 +1015,16 @@ function hideAutoBar() {
 // CLEAR
 // ==============================
 function showClear() {
+  stopAutoPlay(); // オートプレイ中でも止める
   document.getElementById('c-total').textContent = S.total;
   document.getElementById('c-best').textContent  = S.best;
   launchConfetti();
   document.getElementById('clear-overlay').classList.add('open');
+  // 0.5秒後に音声再生（演出が始まってから）
+  setTimeout(() => {
+    const audio = document.getElementById('clear-audio');
+    if (audio) { audio.currentTime = 0; audio.play().catch(() => {}); }
+  }, 500);
 }
 
 function resetGame() {
