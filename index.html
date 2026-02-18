@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>二分の一チャレンジ</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Zen+Dots&family=M+PLUS+Rounded+1c:wght@400;700;900&display=swap');
+
+:root {
+  --bg: #0d0d1a;
+  --panel: #161628;
+  --border: #252545;
+  --accent: #ffd166;
+  --green: #06d6a0;
+  --red: #ef476f;
+  --purple: #9b5de5;
+  --text: #f0f0ff;
+  --muted: #5a5a8a;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: 'M PLUS Rounded 1c', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-x: hidden;
+}
+
+/* ===== HEADER ===== */
+.header {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px 10px;
+  position: sticky; top: 0;
+  background: var(--bg);
+  z-index: 50;
+  border-bottom: 1px solid var(--border);
+}
+.header-title {
+  font-family: 'Zen Dots', sans-serif;
+  font-size: 16px;
+  color: var(--accent);
+}
+.xp-display {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  padding: 6px 14px;
+  font-family: 'Zen Dots', sans-serif;
+  font-size: 15px;
+  color: var(--accent);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.xp-display:active { background: #1e1e38; }
+
+/* ===== STATS BAR ===== */
+.stats-bar {
+  width: 100%;
+  max-width: 480px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  padding: 12px 16px;
+}
+.stat-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 10px 8px;
+  text-align: center;
+}
+.stat-label { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+.stat-val { font-family: 'Zen Dots', sans-serif; font-size: 20px; }
+.stat-val.accent { color: var(--accent); }
+.stat-val.green { color: var(--green); }
+
+/* ===== STREAK DOTS ===== */
+.streak-section {
+  width: 100%;
+  max-width: 480px;
+  padding: 0 16px 12px;
+}
+.streak-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 8px; font-size: 12px; color: var(--muted);
+}
+.current-streak { font-family: 'Zen Dots', sans-serif; font-size: 14px; color: var(--accent); }
+.dots-row { display: flex; gap: 6px; justify-content: center; }
+.dot {
+  flex: 1; max-width: 36px; height: 28px;
+  border-radius: 8px;
+  border: 2px solid var(--border);
+  background: var(--panel);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+  transition: all 0.3s cubic-bezier(.34,1.56,.64,1);
+}
+.dot.done { background: var(--green); border-color: var(--green); color: #fff; box-shadow: 0 0 10px rgba(6,214,160,0.4); }
+.dot.current { border-color: var(--accent); animation: pulseDot 1s infinite; }
+@keyframes pulseDot { 0%,100%{box-shadow:0 0 6px rgba(255,209,102,0.3);} 50%{box-shadow:0 0 18px rgba(255,209,102,0.6);} }
+
+/* ===== GAME AREA ===== */
+.game-area {
+  width: 100%;
+  max-width: 480px;
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+}
+
+.minigame-display {
+  width: 100%;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 24px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  min-height: 190px;
+  position: relative;
+  overflow: hidden;
+}
+.minigame-display::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--purple));
+}
+.game-badge {
+  position: absolute; top: 14px; right: 14px;
+  font-size: 10px; letter-spacing: 2px; color: var(--muted);
+  text-transform: uppercase; border: 1px solid var(--border);
+  border-radius: 100px; padding: 3px 10px;
+}
+.game-icon {
+  font-size: 60px; line-height: 1;
+  transition: transform 0.3s;
+}
+.game-icon.pop { animation: iconPop 0.4s cubic-bezier(.34,1.56,.64,1); }
+@keyframes iconPop { 0%{transform:scale(0.4) rotate(-20deg);opacity:0;} 100%{transform:scale(1) rotate(0);opacity:1;} }
+.game-question { font-size: 17px; font-weight: 700; text-align: center; line-height: 1.5; }
+.game-hint-text { font-size: 12px; color: var(--muted); text-align: center; }
+
+.result-flash {
+  position: fixed; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 100px; opacity: 0; pointer-events: none;
+  z-index: 99;
+}
+.result-flash.show { animation: flashAnim 0.65s ease forwards; }
+.result-flash.wf { background: rgba(6,214,160,0.12); }
+.result-flash.lf { background: rgba(239,71,111,0.12); }
+@keyframes flashAnim { 0%{opacity:0;transform:scale(0.6);} 40%{opacity:1;transform:scale(1.1);} 100%{opacity:0;transform:scale(1.4);} }
+
+/* ===== BUTTONS ===== */
+.choices { display: flex; gap: 16px; width: 100%; }
+.choice-btn {
+  flex: 1; padding: 60px 8px;
+  border-radius: 24px;
+  border: 2px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  font-family: 'Zen Dots', sans-serif;
+  font-size: 36px; font-weight: 900;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.choice-btn .sub { font-size: 11px; font-weight: 400; color: var(--muted); }
+.choice-btn:active { transform: scale(0.96); background: #1a1a30; }
+.choice-btn:disabled { pointer-events: none; }
+.choice-btn.win-btn { background: #0a2a1e; border-color: var(--green); color: var(--green); animation: winFlash 0.15s ease; }
+@keyframes winFlash { 0%{box-shadow:0 0 0px rgba(6,214,160,0);} 50%{box-shadow:0 0 30px rgba(6,214,160,0.6);} 100%{box-shadow:0 0 10px rgba(6,214,160,0.2);} }
+.choice-btn.lose-btn { background: #2a0a14; border-color: var(--red); color: var(--red); box-shadow: 0 0 20px rgba(239,71,111,0.25); }
+.choice-btn.hint-highlight { border-color: var(--accent) !important; box-shadow: 0 0 20px rgba(255,209,102,0.5) !important; animation: hintPulse 0.8s ease 2; }
+@keyframes hintPulse { 0%,100%{box-shadow:0 0 8px rgba(255,209,102,0.3);} 50%{box-shadow:0 0 30px rgba(255,209,102,0.8);} }
+
+/* ===== PROB INFO ===== */
+.prob-info {
+  width: 100%;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 12px 16px;
+  display: flex; justify-content: space-between; align-items: center; gap: 8px;
+}
+.prob-item { text-align: center; flex: 1; }
+.prob-label { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 3px; }
+.prob-val { font-family: 'Zen Dots', sans-serif; font-size: 13px; }
+.prob-divider { width: 1px; height: 36px; background: var(--border); }
+
+/* ===== ITEMS BAR ===== */
+.items-bar { width: 100%; max-width: 480px; padding: 0 16px 16px; }
+.items-bar-title { font-size: 11px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+.items-row { display: flex; flex-direction: column; gap: 8px; }
+.item-chip {
+  width: 100%;
+  background: var(--panel);
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  padding: 12px 16px;
+  display: flex; align-items: center; gap: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.item-chip:active { transform: scale(0.95); }
+.item-chip .item-icon { font-size: 17px; }
+.item-chip .item-name { font-size: 12px; font-weight: 700; }
+.item-chip .item-cost { font-size: 10px; color: var(--accent); }
+.item-count {
+  font-family: 'Zen Dots', sans-serif; font-size: 12px;
+  background: #1e1e38; border-radius: 100px;
+  width: 22px; height: 22px;
+  display: flex; align-items: center; justify-content: center;
+}
+.item-chip.no-stock { opacity: 0.45; }
+.item-chip.shield-on { border-color: var(--green); background: #0a1e18; }
+.item-chip.double-on { border-color: var(--accent); background: #1e1a08; }
+
+/* ===== SHOP MODAL ===== */
+.modal-bg {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.82);
+  z-index: 200;
+  display: none; align-items: flex-end; justify-content: center;
+}
+.modal-bg.open { display: flex; }
+.shop-modal {
+  width: 100%; max-width: 480px;
+  background: var(--bg);
+  border-radius: 28px 28px 0 0;
+  border-top: 1px solid var(--border);
+  padding: 20px 20px 40px;
+  max-height: 85dvh; overflow-y: auto;
+  animation: slideUp 0.3s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes slideUp { from{transform:translateY(100%);} to{transform:translateY(0);} }
+.modal-handle { width: 40px; height: 4px; background: var(--border); border-radius: 100px; margin: 0 auto 20px; }
+.modal-title { font-family: 'Zen Dots', sans-serif; font-size: 20px; color: var(--accent); margin-bottom: 4px; }
+.modal-sub { font-size: 13px; color: var(--muted); margin-bottom: 18px; }
+.shop-xp-bar {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 14px; padding: 12px 16px;
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 18px;
+}
+.shop-xp-label { font-size: 12px; color: var(--muted); }
+.shop-xp-val { font-family: 'Zen Dots', sans-serif; font-size: 22px; color: var(--accent); }
+.shop-item {
+  background: var(--panel); border: 1.5px solid var(--border);
+  border-radius: 18px; padding: 16px; margin-bottom: 10px;
+  display: flex; align-items: center; gap: 14px;
+}
+.shop-item-icon {
+  font-size: 34px; width: 54px; height: 54px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg); border-radius: 14px; flex-shrink: 0;
+}
+.shop-item-info { flex: 1; }
+.shop-item-name { font-size: 15px; font-weight: 700; margin-bottom: 3px; }
+.shop-item-desc { font-size: 12px; color: var(--muted); line-height: 1.5; margin-bottom: 5px; white-space: pre-line; }
+.shop-item-owned { font-size: 11px; color: var(--green); }
+.shop-buy-btn {
+  flex-shrink: 0;
+  background: var(--accent); color: #111; border: none;
+  border-radius: 100px; padding: 10px 14px;
+  font-family: 'M PLUS Rounded 1c', sans-serif; font-weight: 700; font-size: 13px;
+  cursor: pointer; transition: transform 0.15s; white-space: nowrap;
+}
+.shop-buy-btn:active { transform: scale(0.95); }
+.shop-buy-btn:disabled { background: var(--border); color: var(--muted); pointer-events: none; }
+
+/* ===== TOAST ===== */
+.toast {
+  position: fixed; top: 80px; left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 100px; padding: 10px 24px;
+  font-size: 14px; font-weight: 700;
+  opacity: 0; transition: all 0.3s;
+  z-index: 300; white-space: nowrap; max-width: 90vw;
+  text-align: center;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ===== SHAKE ===== */
+@keyframes shake { 0%{transform:translate(0);} 20%{transform:translate(-8px,4px);} 40%{transform:translate(8px,-4px);} 60%{transform:translate(-5px,2px);} 80%{transform:translate(5px,-2px);} 100%{transform:translate(0);} }
+.shaking { animation: shake 0.4s ease; }
+
+/* ===== CLEAR ===== */
+.clear-overlay {
+  position: fixed; inset: 0;
+  z-index: 400; display: none;
+  flex-direction: column; align-items: center; justify-content: center;
+  gap: 20px; padding: 24px;
+  overflow: hidden;
+}
+.clear-overlay.open { display: flex; }
+
+/* 背景：虹色グラデが回転 */
+.clear-bg {
+  position: absolute; inset: -50%;
+  background: conic-gradient(
+    from 0deg,
+    rgba(255,209,102,0.3),
+    rgba(6,214,160,0.3),
+    rgba(155,93,229,0.3),
+    rgba(239,71,111,0.3),
+    rgba(255,209,102,0.3)
+  );
+  animation: bgSpin 4s linear infinite;
+  filter: blur(40px);
+}
+@keyframes bgSpin { from{transform:rotate(0);} to{transform:rotate(360deg);} }
+
+/* 暗いベース */
+.clear-overlay::before {
+  content:'';
+  position:absolute; inset:0;
+  background: rgba(10,10,20,0.75);
+  z-index: 0;
+}
+
+.clear-content {
+  position: relative; z-index: 1;
+  display: flex; flex-direction: column; align-items: center; gap: 20px;
+  width: 100%; max-width: 400px;
+}
+
+/* トロフィー */
+.clear-trophy {
+  font-size: 80px;
+  animation: trophyBounce 0.8s cubic-bezier(.34,1.8,.64,1) both;
+  filter: drop-shadow(0 0 30px rgba(255,209,102,0.8));
+}
+@keyframes trophyBounce { 0%{transform:scale(0) rotate(-20deg);opacity:0;} 100%{transform:scale(1) rotate(0);opacity:1;} }
+
+/* CLEAR!! テキスト */
+.clear-title {
+  font-family: 'Zen Dots', sans-serif;
+  font-size: clamp(48px,14vw,72px);
+  background: linear-gradient(135deg, #ffd166, #06d6a0, #9b5de5, #ef476f, #ffd166);
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: clearPop 0.7s cubic-bezier(.34,1.56,.64,1) 0.2s both,
+             titleShine 3s ease infinite 1s;
+  filter: drop-shadow(0 0 2px rgba(255,255,255,0.1));
+}
+@keyframes clearPop { 0%{transform:scale(0.2) rotate(-10deg);opacity:0;} 100%{transform:scale(1) rotate(0);opacity:1;} }
+@keyframes titleShine { 0%,100%{background-position:0% 50%;} 50%{background-position:100% 50%;} }
+
+/* サブテキスト */
+.clear-sub {
+  font-size: 15px; color: #aaa; text-align: center; line-height: 1.9;
+  animation: fadeUp 0.5s ease 0.6s both;
+}
+@keyframes fadeUp { from{opacity:0;transform:translateY(16px);} to{opacity:1;transform:translateY(0);} }
+
+/* ステータスカード */
+.clear-stats {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 10px; width: 100%;
+  animation: fadeUp 0.5s ease 0.8s both;
+}
+.clear-stat {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 16px; padding: 14px; text-align: center;
+  backdrop-filter: blur(8px);
+}
+.clear-stat .l { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+.clear-stat .v { font-family: 'Zen Dots', sans-serif; font-size: 24px; color: var(--accent); }
+
+/* ボタン */
+.btn-main {
+  background: linear-gradient(135deg, var(--accent), #ff9900);
+  color: #111; border: none; border-radius: 100px;
+  padding: 18px 52px; font-family: 'M PLUS Rounded 1c', sans-serif;
+  font-size: 18px; font-weight: 900; cursor: pointer;
+  animation: fadeUp 0.5s ease 1s both;
+  box-shadow: 0 0 30px rgba(255,209,102,0.4);
+}
+.btn-main:active { transform: scale(0.97); }
+
+/* 光のリング */
+.clear-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.15);
+  animation: ringExpand var(--rd) ease-out var(--delay) infinite;
+  pointer-events: none; z-index: 0;
+}
+@keyframes ringExpand { 0%{width:60px;height:60px;opacity:0.7;} 100%{width:600px;height:600px;opacity:0;} }
+
+/* confetti */
+.confetti { position: fixed; pointer-events: none; z-index: 500; top: -40px; animation: cfFall var(--d) ease-in var(--delay) forwards; }
+@keyframes cfFall { 0%{transform:translateY(0) rotate(0) scale(1);opacity:1;} 100%{transform:translateY(110vh) rotate(var(--r)) scale(0.5);opacity:0;} }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-title">50/50 CHALLENGE</div>
+  <div class="xp-display" onclick="openShop()">
+    ⭐ <span id="xp-val">0</span>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats-bar">
+  <div class="stat-card">
+    <div class="stat-label">挑戦回数</div>
+    <div class="stat-val accent" id="s-total">0</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">最高連続</div>
+    <div class="stat-val green" id="s-best">0</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">成功率</div>
+    <div class="stat-val" id="s-rate">-%</div>
+  </div>
+</div>
+
+<!-- STREAK DOTS -->
+<div class="streak-section">
+  <div class="streak-header">
+    <span>クリアまで</span>
+    <span class="current-streak"><span id="streak-now">0</span> / 10</span>
+  </div>
+  <div class="dots-row" id="dots-row"></div>
+</div>
+
+<!-- GAME AREA -->
+<div class="game-area">
+
+  <div class="result-flash" id="result-flash"></div>
+
+  <div class="choices">
+    <button class="choice-btn" id="btn-a" onclick="choose(0)">A</button>
+    <button class="choice-btn" id="btn-b" onclick="choose(1)">B</button>
+  </div>
+
+  <div class="prob-info">
+    <div class="prob-item">
+      <div class="prob-label">1回の確率</div>
+      <div class="prob-val">50%</div>
+    </div>
+    <div class="prob-divider"></div>
+    <div class="prob-item">
+      <div class="prob-label">ここまでの確率</div>
+      <div class="prob-val" id="prob-chain">100%</div>
+    </div>
+    <div class="prob-divider"></div>
+    <div class="prob-item">
+      <div class="prob-label">クリア確率</div>
+      <div class="prob-val" style="color:var(--muted);">0.098%</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ITEMS BAR -->
+<div class="items-bar">
+  <div class="items-bar-title">🎒 アイテム（タップで使用）</div>
+  <div class="items-row" id="items-row"></div>
+</div>
+
+<!-- SHOP MODAL -->
+<div class="modal-bg" id="modal-bg" onclick="closeShop(event)">
+  <div class="shop-modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">⭐ アイテムショップ</div>
+    <div class="modal-sub">挑戦するたびにXPが溜まる。<br>アイテムを買って有利に進もう！</div>
+    <div class="shop-xp-bar">
+      <span class="shop-xp-label">現在のXP</span>
+      <span class="shop-xp-val">⭐ <span id="shop-xp-val">0</span></span>
+    </div>
+    <div id="shop-list"></div>
+  </div>
+</div>
+
+<!-- CLEAR OVERLAY -->
+<div class="clear-overlay" id="clear-overlay">
+  <div class="clear-bg"></div>
+  <!-- 光のリング x3 -->
+  <div class="clear-ring" style="--rd:2.5s;--delay:0s;"></div>
+  <div class="clear-ring" style="--rd:2.5s;--delay:0.8s;"></div>
+  <div class="clear-ring" style="--rd:2.5s;--delay:1.6s;"></div>
+
+  <div class="clear-content">
+    <div class="clear-trophy">🏆</div>
+    <div class="clear-title">CLEAR!!</div>
+    <div class="clear-sub">10回連続成功！<br>これは奇跡に近い確率だ…</div>
+    <div class="clear-stats">
+      <div class="clear-stat"><div class="l">挑戦回数</div><div class="v" id="c-total">-</div></div>
+      <div class="clear-stat"><div class="l">クリア確率</div><div class="v">0.098%</div></div>
+      <div class="clear-stat"><div class="l">ボーナスXP</div><div class="v">+500</div></div>
+      <div class="clear-stat"><div class="l">最高記録</div><div class="v" id="c-best">10</div></div>
+    </div>
+    <button class="btn-main" onclick="resetGame()">もう一度！</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ==============================
+// SAVE DATA
+// ==============================
+const S = {
+  get xp()   { return +localStorage.getItem('xp')    || 0; },
+  set xp(v)  { localStorage.setItem('xp', v); },
+  get best() { return +localStorage.getItem('best')  || 0; },
+  set best(v){ localStorage.setItem('best', v); },
+  get total(){ return +localStorage.getItem('total') || 0; },
+  set total(v){ localStorage.setItem('total', v); },
+  get wins() { return +localStorage.getItem('wins')  || 0; },
+  set wins(v){ localStorage.setItem('wins', v); },
+  getItems() { return JSON.parse(localStorage.getItem('items') || '{}'); },
+  setItems(v){ localStorage.setItem('items', JSON.stringify(v)); }
+};
+
+// ==============================
+// ITEM DEFINITIONS
+// ==============================
+const ITEM_DEFS = [
+  {
+    id: 'hint',
+    icon: '💡',
+    name: 'ヒント',
+    desc: '正解のボタンが1秒間光る！\n使い切り制・1個ずつ使う',
+    cost: 30,
+    max: 10
+  },
+  {
+    id: 'shield',
+    icon: '🛡️',
+    name: 'シールド',
+    desc: '次に失敗してもストリークがリセットされない！\n発動すると自動で消費',
+    cost: 60,
+    max: 3
+  },
+  {
+    id: 'skip',
+    icon: '⏩',
+    name: 'スキップ',
+    desc: '選択せずに勝利扱いで次へ進む\nストリークを温存したいときに！',
+    cost: 80,
+    max: 5
+  },
+  {
+    id: 'double',
+    icon: '⚡',
+    name: 'ダブルXP',
+    desc: '次の正解のXP獲得量が2倍になる\n高ストリーク時に使うとお得！',
+    cost: 20,
+    max: 10
+  },
+  {
+    id: 'auto',
+    icon: '🤖',
+    name: 'オートプレイ 5分',
+    desc: '5分間AIが自動でランダムに押し続ける！\n途中でタップすればいつでも止められる',
+    cost: 40,
+    max: 5
+  }
+];
+
+// ==============================
+// STATE
+// ==============================
+let streak = 0;
+let waiting = false;
+let shieldActive = false;
+let doubleActive = false;
+let currentCorrect = 0;
+let autoTimer = null;
+let autoPlayActive = false;
+let autoPlayEndTime = 0;
+let autoPlayInterval = null;
+
+// ==============================
+// BOOT
+// ==============================
+function init() {
+  buildDots();
+  buildItemsBar();
+  renderStats();
+  loadGame();
+}
+
+// ==============================
+// UI HELPERS
+// ==============================
+function buildDots() {
+  const row = document.getElementById('dots-row');
+  row.innerHTML = '';
+  for (let i = 0; i < 10; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' current' : '');
+    d.id = `dot-${i}`;
+    row.appendChild(d);
+  }
+}
+
+function syncDots() {
+  for (let i = 0; i < 10; i++) {
+    const d = document.getElementById(`dot-${i}`);
+    if (i < streak)       { d.className = 'dot done'; d.textContent = '✓'; }
+    else if (i === streak) { d.className = 'dot current'; d.textContent = ''; }
+    else                   { d.className = 'dot'; d.textContent = ''; }
+  }
+  document.getElementById('streak-now').textContent = streak;
+}
+
+function renderStats() {
+  document.getElementById('s-total').textContent = S.total;
+  document.getElementById('s-best').textContent  = S.best;
+  const rate = S.total > 0 ? Math.round(S.wins / S.total * 100) : null;
+  document.getElementById('s-rate').textContent  = rate !== null ? rate + '%' : '-%';
+  document.getElementById('xp-val').textContent  = S.xp;
+  if (document.getElementById('shop-xp-val'))
+    document.getElementById('shop-xp-val').textContent = S.xp;
+}
+
+function syncProb() {
+  const p = (Math.pow(0.5, streak) * 100);
+  document.getElementById('prob-chain').textContent =
+    p < 0.01 ? p.toFixed(4) + '%' : p.toFixed(2) + '%';
+}
+
+function showToast(msg, color) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.color = color || 'var(--text)';
+  t.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => t.classList.remove('show'), 2300);
+}
+
+// ==============================
+// LOAD GAME
+// ==============================
+function loadGame() {
+  waiting = false;
+  clearTimeout(autoTimer);
+
+  currentCorrect = Math.floor(Math.random() * 2);
+
+  document.getElementById('btn-a').className = 'choice-btn';
+  document.getElementById('btn-b').className = 'choice-btn';
+  document.getElementById('btn-a').disabled = false;
+  document.getElementById('btn-b').disabled = false;
+  document.getElementById('result-flash').className = 'result-flash';
+
+  syncDots();
+  syncProb();
+}
+
+// ==============================
+// CHOOSE
+// ==============================
+function choose(idx) {
+  if (waiting) return;
+  waiting = true;
+  clearTimeout(autoTimer);
+
+  const win = (idx === currentCorrect);
+
+  S.total = S.total + 1;
+  if (win) S.wins = S.wins + 1;
+
+  const btnA = document.getElementById('btn-a');
+  const btnB = document.getElementById('btn-b');
+  btnA.disabled = true;
+  btnB.disabled = true;
+  const chosen = idx === 0 ? btnA : btnB;
+
+  const flash = document.getElementById('result-flash');
+
+  if (win) {
+    chosen.className = 'choice-btn win-btn';
+
+    let xp = 5 + streak * 3;
+    if (doubleActive) { xp *= 2; doubleActive = false; updateItemChip(); }
+    S.xp = S.xp + xp;
+
+    streak++;
+    if (streak > S.best) S.best = streak;
+    renderStats(); syncDots(); syncProb();
+
+    showToast(`+${xp}XP`, 'var(--green)');
+
+    if (streak >= 10) {
+      S.xp = S.xp + 500;
+      renderStats();
+      setTimeout(() => showClear(), 300);
+    } else {
+      // ボタンの光が見えたらすぐ次へ（約150ms）
+      setTimeout(() => loadGame(), 150);
+    }
+  } else {
+    if (shieldActive) {
+      // Shield blocks loss
+      shieldActive = false;
+      updateItemChip();
+      chosen.className = 'choice-btn lose-btn';
+      flash.textContent = '🛡️';
+      flash.className = 'result-flash show';
+      showToast('🛡️ シールド発動！連続は守られた！', 'var(--accent)');
+      renderStats();
+      setTimeout(() => loadGame(), 1200);
+    } else {
+      chosen.className = 'choice-btn lose-btn';
+      flash.textContent = '❌';
+      flash.className = 'result-flash lf show';
+      document.body.classList.add('shaking');
+      setTimeout(() => document.body.classList.remove('shaking'), 400);
+
+      const prev = streak;
+      streak = 0;
+      renderStats(); syncDots(); syncProb();
+      showToast(`❌ ハズレ…連続 ${prev} でストップ`, 'var(--red)');
+      setTimeout(() => loadGame(), 1100);
+    }
+  }
+}
+
+// ==============================
+// ITEMS BAR
+// ==============================
+function buildItemsBar() {
+  const row = document.getElementById('items-row');
+  row.innerHTML = '';
+  const owned = S.getItems();
+  ITEM_DEFS.forEach(item => {
+    const count = owned[item.id] || 0;
+    const chip = document.createElement('div');
+    chip.className = 'item-chip' + (count === 0 ? ' no-stock' : '');
+    chip.id = `chip-${item.id}`;
+    chip.innerHTML = `
+      <span class="item-icon">${item.icon}</span>
+      <div style="display:flex;flex-direction:column;gap:1px">
+        <div class="item-name">${item.name}</div>
+      </div>
+      <div class="item-count">${count}</div>
+    `;
+    chip.onclick = () => activateItem(item.id);
+    row.appendChild(chip);
+  });
+}
+
+function updateItemChip(id) {
+  const owned = S.getItems();
+  ITEM_DEFS.forEach(item => {
+    if (id && item.id !== id) return;
+    const chip = document.getElementById(`chip-${item.id}`);
+    if (!chip) return;
+    const count = owned[item.id] || 0;
+    chip.querySelector('.item-count').textContent = count;
+    chip.className = 'item-chip' + (count === 0 ? ' no-stock' : '')
+      + (item.id === 'shield' && shieldActive ? ' shield-on' : '')
+      + (item.id === 'double' && doubleActive ? ' double-on' : '');
+  });
+}
+
+function activateItem(id) {
+  const owned = S.getItems();
+  const count = owned[id] || 0;
+  if (count <= 0) { showToast('在庫がない！ショップで購入しよう ⭐', 'var(--muted)'); return; }
+
+  switch (id) {
+    case 'hint': {
+      if (waiting) { showToast('今は使えない…', 'var(--muted)'); return; }
+      consumeItem('hint');
+      const btn = currentCorrect === 0
+        ? document.getElementById('btn-a')
+        : document.getElementById('btn-b');
+      btn.classList.add('hint-highlight');
+      setTimeout(() => btn.classList.remove('hint-highlight'), 1500);
+      showToast('💡 正解のボタンが光った！', 'var(--accent)');
+      break;
+    }
+    case 'shield': {
+      if (shieldActive) { showToast('シールドはもう発動中！', 'var(--muted)'); return; }
+      consumeItem('shield');
+      shieldActive = true;
+      updateItemChip('shield');
+      showToast('🛡️ シールド発動中！次の失敗をガード', 'var(--accent)');
+      break;
+    }
+    case 'skip': {
+      if (waiting) { showToast('今は使えない…', 'var(--muted)'); return; }
+      consumeItem('skip');
+      waiting = true;
+      document.getElementById('btn-a').disabled = true;
+      document.getElementById('btn-b').disabled = true;
+      const flash = document.getElementById('result-flash');
+      flash.textContent = '⏩';
+      flash.className = 'result-flash wf show';
+      let xp = 5 + streak * 3;
+      S.xp = S.xp + xp;
+      S.total = S.total + 1; S.wins = S.wins + 1;
+      streak++;
+      if (streak > S.best) S.best = streak;
+      renderStats(); syncDots(); syncProb();
+      showToast(`⏩ スキップ！連続 ${streak} に延長 +${xp}XP`, 'var(--purple)');
+      if (streak >= 10) { S.xp = S.xp + 500; renderStats(); setTimeout(() => showClear(), 900); }
+      else setTimeout(() => loadGame(), 1000);
+      break;
+    }
+    case 'double': {
+      if (doubleActive) { showToast('ダブルXPはもう発動中！', 'var(--muted)'); return; }
+      consumeItem('double');
+      doubleActive = true;
+      updateItemChip('double');
+      showToast('⚡ 次の正解でXP×2！', 'var(--accent)');
+      break;
+    }
+    case 'auto': {
+      if (autoPlayActive) { stopAutoPlay(); return; }
+      consumeItem('auto');
+      startAutoPlay();
+      break;
+    }
+  }
+}
+
+function consumeItem(id) {
+  const owned = S.getItems();
+  owned[id] = Math.max(0, (owned[id] || 0) - 1);
+  S.setItems(owned);
+  updateItemChip(id);
+}
+
+// ==============================
+// SHOP
+// ==============================
+function openShop() {
+  renderStats();
+  document.getElementById('shop-xp-val').textContent = S.xp;
+  const list = document.getElementById('shop-list');
+  list.innerHTML = '';
+  const owned = S.getItems();
+  ITEM_DEFS.forEach(item => {
+    const count = owned[item.id] || 0;
+    const canBuy = S.xp >= item.cost && count < item.max;
+    const div = document.createElement('div');
+    div.className = 'shop-item';
+    div.innerHTML = `
+      <div class="shop-item-icon">${item.icon}</div>
+      <div class="shop-item-info">
+        <div class="shop-item-name">${item.name}</div>
+        <div class="shop-item-desc">${item.desc}</div>
+        <div class="shop-item-owned">所持：${count} / ${item.max}</div>
+      </div>
+      <button class="shop-buy-btn" id="sbtn-${item.id}"
+        onclick="buyItem('${item.id}')"
+        ${!canBuy ? 'disabled' : ''}>
+        ⭐ ${item.cost}
+      </button>
+    `;
+    list.appendChild(div);
+  });
+  document.getElementById('modal-bg').classList.add('open');
+}
+
+function closeShop(e) {
+  if (e.target === document.getElementById('modal-bg'))
+    document.getElementById('modal-bg').classList.remove('open');
+}
+
+function buyItem(id) {
+  const item = ITEM_DEFS.find(i => i.id === id);
+  const owned = S.getItems();
+  const count = owned[id] || 0;
+  if (S.xp < item.cost || count >= item.max) return;
+  S.xp = S.xp - item.cost;
+  owned[id] = count + 1;
+  S.setItems(owned);
+  renderStats();
+  buildItemsBar();
+  openShop();
+  showToast(`${item.icon} ${item.name} を購入！`, 'var(--accent)');
+}
+
+// ==============================
+// AUTO PLAY
+// ==============================
+function startAutoPlay() {
+  autoPlayActive = true;
+  autoPlayEndTime = Date.now() + 5 * 60 * 1000;
+  showAutoBar();
+  showToast('🤖 オートプレイ開始！タップで停止', 'var(--purple)');
+  scheduleAutoPress();
+}
+
+function scheduleAutoPress() {
+  if (!autoPlayActive) return;
+  if (Date.now() >= autoPlayEndTime) { stopAutoPlay(); return; }
+  // wait until not waiting, then press
+  if (!waiting) {
+    choose(Math.floor(Math.random() * 2));
+  }
+  // next press after current animation settles (~300ms for win, ~1200ms for lose handled in loadGame)
+  autoTimer = setTimeout(() => scheduleAutoPress(), 350);
+}
+
+function stopAutoPlay() {
+  autoPlayActive = false;
+  clearTimeout(autoTimer);
+  autoTimer = null;
+  hideAutoBar();
+  updateItemChip('auto');
+  showToast('🤖 オートプレイ終了', 'var(--muted)');
+}
+
+function showAutoBar() {
+  let bar = document.getElementById('auto-bar');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'auto-bar';
+    bar.style.cssText = `
+      position:fixed; bottom:0; left:0; right:0;
+      background:#1a0a30; border-top:2px solid var(--purple);
+      padding:12px 20px; display:flex; align-items:center;
+      justify-content:space-between; z-index:150;
+      font-family:'M PLUS Rounded 1c',sans-serif;
+    `;
+    bar.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:20px;animation:spin 1s linear infinite">🤖</span>
+        <div>
+          <div style="font-size:12px;color:var(--purple);font-weight:700;letter-spacing:1px">AUTOPLAY中</div>
+          <div id="auto-timer" style="font-family:'Zen Dots',sans-serif;font-size:18px;color:#fff">5:00</div>
+        </div>
+      </div>
+      <button onclick="stopAutoPlay()" style="
+        background:var(--purple);color:#fff;border:none;
+        border-radius:100px;padding:10px 20px;
+        font-family:'M PLUS Rounded 1c',sans-serif;font-weight:700;font-size:14px;cursor:pointer;">
+        ■ 停止
+      </button>
+    `;
+    document.body.appendChild(bar);
+    // add spin keyframe once
+    if (!document.getElementById('spin-style')) {
+      const s = document.createElement('style');
+      s.id = 'spin-style';
+      s.textContent = '@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}';
+      document.head.appendChild(s);
+    }
+  }
+  // start countdown
+  clearInterval(autoPlayInterval);
+  autoPlayInterval = setInterval(() => {
+    const rem = Math.max(0, autoPlayEndTime - Date.now());
+    if (rem <= 0) { clearInterval(autoPlayInterval); return; }
+    const m = Math.floor(rem / 60000);
+    const s = Math.floor((rem % 60000) / 1000);
+    const el = document.getElementById('auto-timer');
+    if (el) el.textContent = `${m}:${String(s).padStart(2,'0')}`;
+  }, 500);
+}
+
+function hideAutoBar() {
+  clearInterval(autoPlayInterval);
+  const bar = document.getElementById('auto-bar');
+  if (bar) bar.remove();
+}
+
+// ==============================
+// CLEAR
+// ==============================
+function showClear() {
+  document.getElementById('c-total').textContent = S.total;
+  document.getElementById('c-best').textContent  = S.best;
+  launchConfetti();
+  document.getElementById('clear-overlay').classList.add('open');
+}
+
+function resetGame() {
+  streak = 0; shieldActive = false; doubleActive = false;
+  document.getElementById('clear-overlay').classList.remove('open');
+  buildDots(); buildItemsBar(); renderStats(); loadGame();
+}
+
+// ==============================
+// CONFETTI
+// ==============================
+function launchConfetti() {
+  const emojis = ['🎉','✨','⭐','🎊','💫','🌟','🏆','🎈','🎆','💥','🌈','🎇'];
+  const colors = ['#ffd166','#06d6a0','#9b5de5','#ef476f','#118ab2','#ff9900','#ffffff'];
+
+  // emoji wave 1
+  for (let i = 0; i < 40; i++) {
+    spawnConfettiEmoji(emojis[Math.floor(Math.random() * emojis.length)], i * 60);
+  }
+  // colored squares wave
+  for (let i = 0; i < 60; i++) {
+    spawnConfettiShape(colors[Math.floor(Math.random() * colors.length)], i * 40);
+  }
+  // second emoji burst after 1.5s
+  setTimeout(() => {
+    for (let i = 0; i < 30; i++) {
+      spawnConfettiEmoji(emojis[Math.floor(Math.random() * emojis.length)], i * 80);
+    }
+  }, 1500);
+}
+
+function spawnConfettiEmoji(emoji, delayMs) {
+  const el = document.createElement('div');
+  el.className = 'confetti';
+  const size = Math.random() * 18 + 14;
+  el.style.cssText = `
+    left:${Math.random() * 100}vw;
+    font-size:${size}px;
+    --d:${(Math.random() * 2 + 2).toFixed(2)}s;
+    --delay:${(delayMs / 1000).toFixed(2)}s;
+    --r:${Math.floor(Math.random() * 720 - 360)}deg;
+  `;
+  el.textContent = emoji;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), delayMs + 4500);
+}
+
+function spawnConfettiShape(color, delayMs) {
+  const el = document.createElement('div');
+  el.className = 'confetti';
+  const size = Math.random() * 10 + 6;
+  const isCircle = Math.random() < 0.4;
+  el.style.cssText = `
+    left:${Math.random() * 100}vw;
+    width:${size}px; height:${size * (Math.random() * 1.5 + 0.5)}px;
+    background:${color};
+    border-radius:${isCircle ? '50%' : '2px'};
+    --d:${(Math.random() * 2.5 + 1.5).toFixed(2)}s;
+    --delay:${(delayMs / 1000).toFixed(2)}s;
+    --r:${Math.floor(Math.random() * 720 - 360)}deg;
+  `;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), delayMs + 4500);
+}
+
+// START
+init();
+</script>
+</body>
+</html>
